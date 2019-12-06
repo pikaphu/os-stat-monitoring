@@ -1,0 +1,127 @@
+<html>
+
+<head>
+    <link href='https://fonts.googleapis.com/css?family=ABeeZee' rel='stylesheet'>
+    <style>
+        body {
+            font-family: 'ABeeZee';
+            font-size: 22px;
+        }
+
+        h1 {
+            display: block;
+        }
+
+        h1 * {
+            font-size: x-large;
+        }
+
+        div[id^='chart_div'].inline {
+            display: inline-flex;
+        }
+
+        div[id^='chart_div'].fullwidth {
+            display: inline-flex;
+            width: 50%;
+
+        }
+    </style>
+
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="/socket.io"></script>
+    <script type="text/javascript">
+        // Load the Visualization API and the corechart package.
+        google.charts.load('current', {
+            'packages': ['corechart', 'line']
+        });
+
+        var chartLoaded = false;
+        var histogram = [
+            [0, 0],
+            [1, 100]
+        ];
+
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.charts.setOnLoadCallback(drawChart);
+        google.charts.setOnLoadCallback(drawChart2);
+
+        // Callback that creates and populates a data table,
+        // instantiates the pie chart, passes in the data and
+        // draws it.
+        function drawChart() {
+
+            // Create the data table.
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Fertilizer');
+            data.addColumn('number', 'Ratio');
+            data.addRows([
+                ['(N) Nitrogen', 25],
+                ['(P) Phosphorus', 16],
+                ['(K) Potassium', 16]
+            ]);
+
+            // Set chart options
+            var options = {
+                'title': 'Fertilizer Ratio',
+                'width': 400,
+                'height': 300
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+            chart.draw(data, options);
+        }
+
+        function drawChart2() {
+
+            // Create the data table.
+            var data = new google.visualization.DataTable();
+            data.addColumn('number', 'CPU');
+            data.addColumn('number', 'Percent');
+            data.addRows(histogram);
+
+            // Set chart options
+            var options = {
+                title: 'CPU Usage',
+                viewWindow: {
+                    min: 0,
+                    max: 100
+                },
+                vAxis: {
+                    maxValue: 100
+                },
+            };
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart = new google.visualization.LineChart(document.getElementById('chart_div2'));
+            chart.draw(data, options);
+
+            chartLoaded = true;
+        }
+    </script>
+
+    <script>
+        var socket = io();
+        socket.on('cpu_histogram', (cpuHist, cpuCur) => {
+            histogram = cpuHist;
+            // console.log(cpuHist);
+
+            if (chartLoaded) {
+                drawChart2();
+                document.getElementById("cpu_status").innerHTML = cpuCur;
+            }
+        })
+    </script>
+</head>
+
+<body>
+    <h1> OS Monitoring <span>(NodeJS + SocketIO + GG Chart)</span> </h1>
+
+    <!--Div that will hold the pie chart-->
+    <div id="chart_div" class="inline"></div>
+    <div id="chart_div2" class="fullwidth"></div>
+    <label>Current CPU: <span id="cpu_status"></span> % </label>
+</body>
+
+</html>
